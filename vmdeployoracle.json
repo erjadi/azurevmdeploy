@@ -1,0 +1,166 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "customVmName": {
+      "type": "string",
+      "metadata": {
+        "description": "This is the name of the your VM"
+      }
+    },
+    "dnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "User Name for the Virtual Machine"
+      }
+    },
+    "certificateData": {
+      "type": "string",
+      "metadata": {
+        "description": "Certificate data for SSH."
+      }
+    }
+  },
+  "variables": {
+    "osType" :  "Linux",
+    "newOrExistingVnet": "existing",
+    "newOrExistingVnetName": "rgOracleLinux-vnet",
+    "newOrExistingSubnetName": "default",
+    "existingVnetResourceGroupName": "rgOracleLinux",
+    "userImageStorageAccountName": "rgoraclelinuxdisks542",
+    "userImageStorageAccountResourceGroupName": "rgOracleLinux",
+    "vmSize": "Standard_DS2_v2",
+    "publicIPAddressName": "[concat(parameters('customVmName'),'IP')]",
+    "vmName": "[parameters('customVmName')]",
+    "nicName": "[concat(parameters('customVmName'),'Nic')]",
+    "publicIPAddressType": "Dynamic",
+    "apiVersion": "2015-06-15",
+    "templatelink": "[concat('https://raw.githubusercontent.com/singhkay/azure-quickstart-templates/master/101-vm-from-user-image/',variables('newOrExistingVnet'),'vnet.json')]"
+  },
+  "resources": [
+    {
+            "apiVersion": "2015-01-01",
+            "name": "vnet-template",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[variables('templatelink')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetworkName": {
+                        "value": "[variables('newOrExistingVnetName')]"
+                    },
+                    "subnetName": {
+                        "value": "[variables('newOrExistingSubnetName')]"
+                    },
+                    "existingVnetResourceGroupName": {
+                        "value": "[variables('existingVnetResourceGroupName')]"
+                    }
+                }
+            }
+        },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "Microsoft.Resources/deployments/vnet-template"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[reference('vnet-template').outputs.subnet1Ref.value]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication" :  true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "/home/eric/.ssh/authorized_keys",
+                  "keyData": "[parameters('certificateData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'-osDisk')]",
+            "osType": "[variables('osType')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "image": {
+              "uri": "https://rgoraclelinuxdisks542.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/OracleImage-osDisk.27b10c8c-ff94-436b-81ac-b0af0c88560b.vhd"
+            },
+            "vhd": {
+              "uri": "https://rgoraclelinuxdisks542.blob.core.windows.net/vmcontainerdc7999c3-e4da-457c-95df-79b03831b70e/osDisk.dc7999c3-e4da-457c-95df-79b03831b70e.vhd"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "false",
+            "storageUri": "[concat(reference(resourceId(variables('userImageStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', variables('userImageStorageAccountName')), variables('apiVersion')).primaryEndpoints.blob)]"
+          }
+        }
+      }
+    }
+  ]
+}
