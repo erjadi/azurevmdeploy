@@ -20,6 +20,12 @@
         "description": "User Name for the Virtual Machine"
       }
     },
+    "ImageStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account that contains the image"
+      }
+    },
     "certificateData": {
       "type": "string",
       "metadata": {
@@ -35,7 +41,7 @@
     "existingVnetResourceGroupName": "rgOracleLinux",
     "userImageStorageAccountName": "[parameters('ImageStorageAccountName')]",
     "userImageStorageAccountResourceGroupName": "rgOracleLinux",
-    "vmSize": "Standard_DS2_v2",
+    "vmSize": "Standard_DS1",
     "publicIPAddressName": "[concat(parameters('customVmName'),'IP')]",
     "vmName": "[parameters('customVmName')]",
     "nicName": "[concat(parameters('customVmName'),'Nic')]",
@@ -126,7 +132,7 @@
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "/home/eric/.ssh/authorized_keys",
+                  "path": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
                   "keyData": "[parameters('certificateData')]"
                 }
               ]
@@ -140,10 +146,10 @@
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "image": {
-              "uri": "https://rgoraclelinuxdisks542.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/OracleImage-osDisk.27b10c8c-ff94-436b-81ac-b0af0c88560b.vhd"
+              "uri": "https://rgoraclelinuxdisks179.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/ImageVHD-osDisk.13adda45-cb5c-439c-9544-e0cf965927ae.vhd"
             },
-            "vhd": {
-              "uri": "https://rgoraclelinuxdisks542.blob.core.windows.net/vmcontainerdc7999c3-e4da-457c-95df-79b03831b70e/osDisk.dc7999c3-e4da-457c-95df-79b03831b70e.vhd"
+            "vhd": {            
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('userImageStorageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/', uniqueString(resourceGroup().id), variables('vmName'),'-osDisk.vhd')]"
             }
           }
         },
