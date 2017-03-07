@@ -1,0 +1,23 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "customVmName": {
+            "value": "oracleLinuxVMClone"
+        },
+        "dnsLabelPrefix": {
+            "value": "oraclednstest"
+        },
+        "adminUserName": {
+            "value": "eric"
+        },
+      "certificateData": {
+        "value": "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEApmiWRgWdxnRaFDxiAddVcVFfTu3Yx6qLqAAIxDmLeDHJc9D7Pj8sO2sjFwv4lkEx55yAV2sraXWdKd4GcZLrAJHPqq+cRP+bXn1/ghPFigCuLRLXufJFNZCNZ889Q70VEfjylqY5cBqK4BfkzHJalR0BLGyH8lX6JDVTHK6DLuaVyUnb2+aXhZroqecIN9zxssoLROnP1Q4a3BIdJa2sY7AznNXIqw770Y3Yw968nm14Fdc3BZfuHG8OF565QtlDaNPuVh3ioLQDnc4TgAamLPt69mz7uP6FyBgcVpxb92RAbUZXabgJP8lwZIX+7vVJP6nlT4/ZKrhqey00d6KD6w== rsa-key-20161007"
+      },
+      {
+        "ImageStorageAccountName": {
+          "value" : "rgoraclelinuxdisks600"
+        }
+      }
+   }
+}

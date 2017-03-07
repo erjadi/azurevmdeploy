@@ -33,7 +33,7 @@
     "newOrExistingVnetName": "rgOracleLinux-vnet",
     "newOrExistingSubnetName": "default",
     "existingVnetResourceGroupName": "rgOracleLinux",
-    "userImageStorageAccountName": "rgoraclelinuxdisks542",
+    "userImageStorageAccountName": "[parameters('ImageStorageAccountName')]",
     "userImageStorageAccountResourceGroupName": "rgOracleLinux",
     "vmSize": "Standard_DS2_v2",
     "publicIPAddressName": "[concat(parameters('customVmName'),'IP')]",
